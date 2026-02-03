@@ -1,0 +1,28 @@
+{
+  "name": "Daily XKCD",
+  "version": "1.0.0",
+  "description": "Displays the latest XKCD comic with optional random or time-shifted selection.",
+  "nativeSettings": {
+    "kind": "latest",
+    "difference": 0
+  },
+  "formSchema": {
+    "type": "object",
+    "properties": {
+      "kind": {
+        "type": "string",
+        "description": "Which comic to show.",
+        "enum": ["latest", "random"],
+        "default": "latest"
+      },
+      "difference": {
+        "type": "integer",
+        "description": "Show the comic from N days ago (e.g. 356 for last year).",
+        "minimum": 0,
+        "maximum": 5000,
+        "default": 0
+      }
+    }
+  },
+  "renderPage": "./render.html"
+}

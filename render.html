@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Daily XKCD</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        background: #fff;
+        color: #000;
+      }
+
+      .screen {
+        width: 100vw;
+        height: 100vh;
+        padding: 1.3em;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .card {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1em;
+      }
+
+      .title {
+        font-size: clamp(1rem, 1.4vw + 0.8rem, 2rem);
+        font-weight: 600;
+        text-align: center;
+      }
+
+      .subtitle {
+        font-size: clamp(0.9rem, 0.9vw + 0.6rem, 1.3rem);
+        opacity: 0.75;
+        text-align: center;
+      }
+
+      .image-wrap {
+        flex: 1;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+
+      img {
+        max-width: 100%;
+        max-height: 100%;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        border-radius: 12px;
+        background: rgba(0, 0, 0, 0.03);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        img {
+          background: rgba(255, 255, 255, 0.05);
+        }
+      }
+
+      .status {
+        font-size: 0.95rem;
+        opacity: 0.8;
+        text-align: center;
+        display: none;
+      }
+
+      .hidden-marker {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="website-has-loading-element" class="hidden-marker"></div>
+    <div id="website-has-loaded" class="hidden-marker"></div>
+
+    <main class="screen">
+      <section class="card">
+        <div class="title" id="comic-title">Loading XKCD…</div>
+        <div class="subtitle" id="comic-subtitle"></div>
+        <div class="image-wrap">
+          <img id="comic-image" alt="XKCD comic" />
+        </div>
+        <div class="status" id="comic-status">Fetching comic…</div>
+      </section>
+    </main>
+
+    <script>
+      const titleEl = document.getElementById("comic-title");
+      const subtitleEl = document.getElementById("comic-subtitle");
+      const imageEl = document.getElementById("comic-image");
+      const statusEl = document.getElementById("comic-status");
+      const loadedMarker = document.getElementById("website-has-loaded");
+
+      const XKCD_PROXY = "/api/xkcd";
+
+      const params = new URLSearchParams(window.location.search);
+      const kind = (params.get("kind") || "").toLowerCase();
+      const difference = Number.parseInt(params.get("difference"), 10);
+
+      function markLoaded() {
+        loadedMarker.textContent = "ready";
+      }
+
+      function setStatus(message) {
+        statusEl.textContent = message;
+      }
+
+      async function fetchJson(url) {
+        const response = await fetch(url, { cache: "no-store" });
+        if (!response.ok) {
+          throw new Error(`Failed to load ${url}`);
+        }
+        return response.json();
+      }
+
+      async function getLatestComic() {
+        return fetchJson(XKCD_PROXY);
+      }
+
+      async function getComicByNumber(number) {
+        const url = `${XKCD_PROXY}?num=${encodeURIComponent(number)}`;
+        return fetchJson(url);
+      }
+
+      function resolveImageUrl(originalUrl) {
+        if (!originalUrl || originalUrl.endsWith(".svg")) {
+          return originalUrl;
+        }
+        const match = originalUrl.match(/(\.[a-zA-Z0-9]+)(\?.*)?$/);
+        if (!match) {
+          return originalUrl;
+        }
+        const ext = match[1];
+        const query = match[2] || "";
+        const base = originalUrl.slice(
+          0,
+          originalUrl.length - ext.length - query.length,
+        );
+        return `${base}_2x${ext}${query}`;
+      }
+
+      async function resolveComic() {
+        const latest = await getLatestComic();
+        if (kind === "random") {
+          const randomNumber = Math.max(
+            1,
+            Math.floor(Math.random() * latest.num) + 1,
+          );
+          return getComicByNumber(randomNumber);
+        }
+        if (Number.isFinite(difference) && difference > 0) {
+          const targetNumber = Math.max(1, latest.num - difference);
+          return getComicByNumber(targetNumber);
+        }
+        return latest;
+      }
+
+      async function loadComic() {
+        try {
+          const comic = await resolveComic();
+          titleEl.textContent = comic.title;
+          subtitleEl.textContent = `#${comic.num} • ${comic.day}.${comic.month}.${comic.year}`;
+          imageEl.src = resolveImageUrl(comic.img);
+          imageEl.alt = comic.alt || `XKCD #${comic.num}`;
+          imageEl.onload = () => {
+            setStatus(comic.alt || "");
+            markLoaded();
+          };
+          imageEl.onerror = () => {
+            setStatus("Could not load the comic image.");
+            markLoaded();
+          };
+        } catch (error) {
+          console.error(error);
+          titleEl.textContent = "Unable to load XKCD";
+          subtitleEl.textContent = "";
+          setStatus("Please try again later.");
+          markLoaded();
+        }
+      }
+
+      window.addEventListener("message", (event) => {
+        const data = event.data || {};
+        const payload = data.payload || data.data || {};
+        if (data.type === "INIT" || data.cmd === "message") {
+          if (payload.settings?.kind || payload.settings?.difference) {
+            const newParams = new URLSearchParams(window.location.search);
+            if (payload.settings?.kind) {
+              newParams.set("kind", payload.settings.kind);
+            }
+            if (payload.settings?.difference) {
+              newParams.set("difference", payload.settings.difference);
+            }
+            window.history.replaceState(
+              {},
+              "",
+              `${window.location.pathname}?${newParams.toString()}`,
+            );
+            loadComic();
+          }
+        }
+      });
+
+      loadComic();
+    </script>
+  </body>
+</html>
