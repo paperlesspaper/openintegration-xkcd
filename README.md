@@ -22,6 +22,15 @@ Inside the app select `New Image` > `Custom Integration` and enter the url:
 
 The `api/xkcd.js` endpoint requests the latest XKCD JSON feed, extracts the minimal fields needed for the display, and returns them for consumption by the `render.html`
 
+## Development
+
+Install the Vercel CLI once, then start the local dev server:
+
+1. `npm i -g vercel`
+2. `vercel dev`
+
+The app will be available at `http://localhost:3000`. Use `/config.json` as the integration URL while developing and `/render.html` to see the preview.
+
 ## Deployment
 
 Deploy to Vercel and ensure the `api` directory is recognized as serverless functions. The static rendering uses `render.html` and does not require a build step.
