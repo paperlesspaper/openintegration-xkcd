@@ -6,6 +6,11 @@ This is a sample for a very simple implementation using the OpenIntegration of [
 
 This project renders a minimal daily XKCD view that can be used in the [paperlesspaper project](https://github.com/paperlesspaper).
 
+## How to use
+
+Inside the app select `New Image` > `Custom Integration` and enter the url:
+`https://openintegration-dailyxkcd-gamma.vercel.app/config.json`
+
 ## Key files
 
 - [render.html](render.html): Static rendering template used for the display.
