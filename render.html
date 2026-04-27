@@ -92,21 +92,10 @@
         text-align: center;
         display: none;
       }
-
-      .hidden-marker {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        overflow: hidden;
-        clip: rect(0, 0, 0, 0);
-        white-space: nowrap;
-      }
     </style>
   </head>
   <body>
-    <div id="website-has-loading-element" class="hidden-marker"></div>
-    <div id="website-has-loaded" class="hidden-marker"></div>
-
+    <div id="website-has-loading-element"></div>
     <main class="screen">
       <section class="card">
         <div class="title" id="comic-title">Loading XKCD…</div>
@@ -123,7 +112,6 @@
       const subtitleEl = document.getElementById("comic-subtitle");
       const imageEl = document.getElementById("comic-image");
       const statusEl = document.getElementById("comic-status");
-      const loadedMarker = document.getElementById("website-has-loaded");
 
       let paper = {
         pluginSettings: {
@@ -135,7 +123,9 @@
       const XKCD_PROXY = "/api/xkcd";
 
       function markLoaded() {
-        loadedMarker.textContent = "ready";
+        loadedMarker = document.createElement("div");
+        loadedMarker.id = "website-has-loaded";
+        document.body.appendChild(loadedMarker);
       }
 
       function setStatus(message) {
@@ -223,9 +213,9 @@
       }
 
       window.addEventListener("message", (event) => {
-        const data = event.data || {};
-        const payload = data.payload || data.data || {};
+        const data = event.data;
         if (data.type === "INIT" || data.cmd === "message") {
+          const payload = data.data;
           console.log("Received message from parent:", payload);
           paper = payload;
           loadComic();
