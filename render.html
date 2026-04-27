@@ -114,9 +114,11 @@
       const statusEl = document.getElementById("comic-status");
 
       let paper = {
-        pluginSettings: {
-          kind: "latest",
-          difference: 0,
+        meta: {
+          pluginSettings: {
+            kind: "latest",
+            difference: 0,
+          },
         },
       };
 
@@ -176,12 +178,12 @@
           return getComicByNumber(randomNumber);
         }
         if (
-          Number.isFinite(paper.pluginSettings.difference) &&
-          paper.pluginSettings.difference > 0
+          Number.isFinite(paper.meta.pluginSettings.difference) &&
+          paper.meta.pluginSettings.difference > 0
         ) {
           const targetNumber = Math.max(
             1,
-            latest.num - paper.pluginSettings.difference,
+            latest.num - paper.meta.pluginSettings.difference,
           );
           return getComicByNumber(targetNumber);
         }
