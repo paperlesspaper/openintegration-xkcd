@@ -125,11 +125,14 @@
       const statusEl = document.getElementById("comic-status");
       const loadedMarker = document.getElementById("website-has-loaded");
 
-      const XKCD_PROXY = "/api/xkcd";
+      let paper = {
+        pluginSettings: {
+          kind: "latest",
+          difference: 0,
+        },
+      };
 
-      const params = new URLSearchParams(window.location.search);
-      const kind = (params.get("kind") || "").toLowerCase();
-      const difference = Number.parseInt(params.get("difference"), 10);
+      const XKCD_PROXY = "/api/xkcd";
 
       function markLoaded() {
         loadedMarker.textContent = "ready";
@@ -175,15 +178,21 @@
 
       async function resolveComic() {
         const latest = await getLatestComic();
-        if (kind === "random") {
+        if (paper.pluginSettings.kind === "random") {
           const randomNumber = Math.max(
             1,
             Math.floor(Math.random() * latest.num) + 1,
           );
           return getComicByNumber(randomNumber);
         }
-        if (Number.isFinite(difference) && difference > 0) {
-          const targetNumber = Math.max(1, latest.num - difference);
+        if (
+          Number.isFinite(paper.pluginSettings.difference) &&
+          paper.pluginSettings.difference > 0
+        ) {
+          const targetNumber = Math.max(
+            1,
+            latest.num - paper.pluginSettings.difference,
+          );
           return getComicByNumber(targetNumber);
         }
         return latest;
@@ -217,21 +226,9 @@
         const data = event.data || {};
         const payload = data.payload || data.data || {};
         if (data.type === "INIT" || data.cmd === "message") {
-          if (payload.settings?.kind || payload.settings?.difference) {
-            const newParams = new URLSearchParams(window.location.search);
-            if (payload.settings?.kind) {
-              newParams.set("kind", payload.settings.kind);
-            }
-            if (payload.settings?.difference) {
-              newParams.set("difference", payload.settings.difference);
-            }
-            window.history.replaceState(
-              {},
-              "",
-              `${window.location.pathname}?${newParams.toString()}`,
-            );
-            loadComic();
-          }
+          console.log("Received message from parent:", payload);
+          paper = payload;
+          loadComic();
         }
       });
 
