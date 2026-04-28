@@ -170,7 +170,7 @@
 
       async function resolveComic() {
         const latest = await getLatestComic();
-        if (paper.pluginSettings.kind === "random") {
+        if (paper.meta.pluginSettings.kind === "random") {
           const randomNumber = Math.max(
             1,
             Math.floor(Math.random() * latest.num) + 1,
